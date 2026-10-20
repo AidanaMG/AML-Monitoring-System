@@ -1,0 +1,402 @@
+﻿@page "/alerts/{Id:int}"
+@attribute [Authorize]
+@using System.Net
+@using System.Text.Json
+@using Aml.AdminPanel.Models
+@using Aml.AdminPanel.Services
+@using Microsoft.AspNetCore.Authorization
+@using Microsoft.AspNetCore.Components.Authorization
+@inject AlertsApi Api
+@inject NavigationManager Navigation
+
+
+@if(alert is null)
+{
+    <p style="font-family: 'Cascadia Code', Consolas, monospace; font-size: 1rem; color: #39ff88; text-shadow: 0 0 14px rgba(57, 255, 136, 0.5)">LOADING...</p>
+}
+else
+{
+    <h1 style="font-family: 'Cascadia Code', Consolas, monospace; font-weight: 700; font-size: 1.9rem; color: #d7f5e0; margin-bottom: 1.25rem;">
+        <a href="/alerts" class="back-link" style="color: #39ff88; text-decoration: none;">&lt;</a> Alert @alert.Id
+    </h1>
+
+    <div style="background-color: #0f1712; border: 1px solid #1f3a28; border-left: 4px solid @StatusColor(alert.Status);
+        border-radius: 10px; padding: 1.25rem 1.5rem; margin-bottom: 1.5rem; box-shadow: 0 0 20px rgba(57, 255, 136, 0.08); font-family: 'Cascadia Code', Consolas, monospace;">
+        
+        <dl class="row term-dl mb-0">
+            <dt class="col-sm-3">Client</dt>
+            <dd class="col-sm-9">@alert.ClientName (Id: @alert.ClientId)</dd>
+
+            <dt class="col-sm-3">Rule [Primary Trigger]</dt>
+            <dd class="col-sm-9">@alert.PrimaryTrigger</dd>
+
+            <dt class="col-sm-3">Risk Score</dt>
+            <dd class="col-sm-9">
+                <span style="color: @ScoreColor(alert.RiskScore); font-weight: 700; text-shadow: 0 0 10px @ScoreColor(alert.RiskScore)80;">
+                    @alert.RiskScore
+                </span>
+            </dd>
+
+            <dt class="col-sm-3">Status</dt>
+
+            <dd class="col-sm-9">
+                <span style="color: @StatusColor(alert.Status); border: 1px solid @StatusColor(alert.Status);
+                    border-radius: 6px; padding: 0.1rem 0.55rem; font-size: 0.75rem; font-weight: 700; letter-spacing: 1px;">
+                    @alert.Status.ToUpperInvariant()
+                </span>
+            </dd>
+
+            <dt class="col-sm-3">Created At</dt>
+            <dd class="col-sm-9">
+                <span style="color: #6b8f78;">
+                    @alert.CreatedAt.ToString("dd.MM.yyyy HH:mm:ss")
+                </span>
+            </dd>
+
+
+            @if (alert.ResolvedAt is not null)
+            {
+                <dt class="col-sm-3">Resolved At</dt>
+                <dd class="col-sm-9">
+                    <span style="color: #6b8f78;">
+                        @alert.ResolvedAt?.ToString("dd.MM.yyyy HH:mm:ss")
+                    </span>
+                </dd>
+
+                <dt class="col-sm-3">Resolved By</dt>
+                <dd class="col-sm-9">@alert.ResolvedBy</dd>
+
+                <dt class="col-sm-3">Resolution Comment</dt>
+                <dd class="col-sm-9">@alert.ResolutionComment</dd>
+            }
+        </dl>
+    </div>
+
+
+    <h3 style="font-size: 1.25rem; font-weight: 700; color: #f1fff6; border-left: 4px solid #39ff88; padding-left: 0.75rem; margin-bottom: 1rem;">
+        SCREENED TRANSACTION
+    </h3>
+
+    @if(alert.Transaction is null)
+    {
+        <p style="font-family: 'Cascadia Code', Consolas, monospace; color: #6b8f78;">
+            No transaction linked
+        </p>
+    }
+    else
+    {
+        <div style="background-color: #0f1712; border: 1px solid #1f3a28; border-radius: 10px;
+            padding: 1.25rem 1.5rem; margin-bottom: 1.5rem; font-family: 'Cascadia Code', Consolas, monospace;">
+
+            <dl class="row term-dl mb-0">
+                <dt class="col-sm-3">Transaction Id</dt>
+                <dd class="col-sm-9">@alert.Transaction.Id</dd>
+
+                <dt class="col-sm-3">Type</dt>
+                <dd class="col-sm-9">@alert.Transaction.Type / @alert.Transaction.Direction</dd>
+
+                <dt class="col-sm-3">Amount</dt>
+                <dd class="col-sm-9">
+                    <span style="color: #f1fff6; font-weight: 700;">
+                        @alert.Transaction.Amount.ToString("N2") @alert.Transaction.Currency
+                    </span>
+                </dd>
+
+                <dt class="col-sm-3">Date</dt>
+                <dd class="col-sm-9">
+                    <span style="color: #6b8f78;">@alert.Transaction.TransactionDate.ToString("dd.MM.yyyy HH:mm:ss")</span>
+                </dd>
+
+                <dt class="col-sm-3">Counterparty</dt>
+                <dd class="col-sm-9">@(alert.Transaction.CounterpartyName ?? "—")</dd>
+
+                <dt class="col-sm-3">Merchant</dt>
+                <dd class="col-sm-9">@(alert.Transaction.MerchantName ?? "—")</dd>
+
+                <dt class="col-sm-3">Operation country</dt>
+                <dd class="col-sm-9">@(alert.Transaction.TransactionCountry ?? "—")</dd>
+
+                <dt class="col-sm-3">Counterparty country</dt>
+                <dd class="col-sm-9">@(alert.Transaction.CounterpartyCountry ?? "—")</dd>
+            </dl>
+        </div>
+    }
+
+
+    <h3 style="font-size: 1.25rem; font-weight: 700; color: #f1fff6; border-left: 4px solid #39ff88; padding-left: 0.75rem; margin-bottom: 1rem;">
+        RULE TRIGGERS
+    </h3>    
+
+    @if(breakdown is not null)
+
+{
+        @foreach (var rule in breakdown)
+        {
+            <div class="card mb-2" style="background-color: #0f1712; border: 1px solid #1f3a28; border-radius: 10px; font-family: 'Cascadia Code', Consolas, monospace;">
+                <div class="card-body" style="padding: 1rem 1.25rem;">
+                    <h5 class="card-title d-flex align-items-center gap-2" style="font-size: 1rem; font-weight: 700; color: #f1fff6;">
+                        <span style="color: #39ff88;">&gt;</span> @rule.RuleCode
+                        
+                        <span style="color: #3aa0ff; border: 1px solid rgba(58, 160, 255, 0.5); border-radius: 6px; padding: 0.05rem 0.5rem;
+                        font-size: 1rem; letter-spacing: 1px;">@rule.Type</span>
+
+                        @if (rule.Contribution > 0)
+                        {
+                            <span style="color: #ff9f3a; border: 1px solid rgba(255, 159, 58, 0.5); border-radius: 6px; padding: 0.05rem 0.5rem;
+                            font-size: 1rem; letter-spacing: 1px;">+@rule.Contribution</span>
+                        }
+                    </h5>
+                    <hr style="border-color: #1f3a28; opacity: 1; margin: 0.6rem 0;"/>
+                    <p class="card-text mb-1" style="color: #d7f5e0;">
+                        <span style="color: #6b8f78; font-size: 0.75rem; letter-spacing: 1.5px;">MATCHED</span>
+                        <span style="color: #39ff88; font-weight: 700;">@rule.Matched</span> / @rule.Total
+                    </p>
+                    <p class="card-text mb-0"><small style="color: #6b8f78; white-space: pre-wrap;">@rule.Details</small></p>
+                </div>
+            </div>
+        }
+    }
+
+    @if(alert.Status == "New")
+    {
+        <AuthorizeView Roles="Officer">
+            <button class="btn login-btn mt-3" style="min-width: 180px;" disabled="@isBusy" 
+                    @onclick='() => Ask("Take to review", "Take alert #" + alert.Id + " to review? It will be assigned to you.", "#39ff88", TakeToReviewAsync)'>
+                TAKE TO REVIEW</button>
+        </AuthorizeView>
+        
+    }
+    else if(alert.Status == "UnderReview")
+    {
+        <p class="mt-3" style="font-family: 'Cascadia Code', Consolas, monospace; color: #6b8f78;">IN REVIEW BY
+            <span style="color: #ff9f3a; font-weight: 700;">@alert.AssignedTo</span>
+        </p>
+
+        @if (error is not null)
+        {
+            <p style="color: #ff6b6b; background: rgba(255, 107, 107, 0.1); border: 1px solid rgba(255, 107, 107, 0.35); border-radius: 8px; padding: 0.6rem 1rem;">@error</p>
+        }
+
+        <AuthorizeView Roles="Officer">
+            <div class="mb-3">
+                <label class="form-label" style="font-family: 'Cascadia Code', Consolas, monospace; letter-spacing: 1.5px; color: #6b8f78;">
+                    COMMENT</label>
+                <textarea class="form-control login-input" rows="13" @bind="comment"></textarea>
+            </div>
+
+            <button class="btn term-btn-danger me-2" disabled="@isBusy"
+                    @onclick='() => AskResolve("Blocked")'>
+                CONFIRM BLOCK
+            </button>
+
+            <button class="btn term-btn-ok" disabled="@isBusy"
+                    @onclick='() => AskResolve("FalsePositive")'>
+                FALSE POSITIVE
+            </button>
+        </AuthorizeView>
+    }
+}
+
+@if(showConfirm)
+{
+    <div style="position: fixed; inset: 0; background-color: rgba(0, 0, 0, 0.65); z-index: 2000;
+        display: flex; align-items: center; justify-content: center;"
+         @onclick="ConfirmNo">
+
+        <div style="width: 100%; max-width: 420px; margin: 1rem; background-color: #0f1712; border: 1px solid #1f3a28;
+            border-top: 3px solid @confirmColor; border-radius: 10px; padding: 1.5rem;
+            box-shadow: 0 0 40px rgba(0, 0, 0, 0.6); font-family: 'Cascadia Code', Consolas, monospace;"
+             @onclick:stopPropagation="true">
+
+            <div style="font-size: 0.75rem; letter-spacing: 1.5px; color: #6b8f78; margin-bottom: 0.5rem;">CONFIRM ACTION</div>
+            <h5 style="font-weight: 700; color: @confirmColor; margin-bottom: 0.75rem;">
+                <span>&gt;</span> @confirmTitle
+            </h5>
+            <p style="color: #d7f5e0; margin-bottom: 1.5rem;">@confirmText</p>
+
+            <div class="d-flex justify-content-end gap-2">
+                <button class="btn btn-sm term-btn" @onclick="ConfirmNo">CANCEL</button>
+                <button class="btn btn-sm login-btn" style="border-radius: 6px; font-weight: 700;"
+                        @onclick="ConfirmYesAsync">
+                    YES, I'M SURE
+                </button>
+            </div>
+        </div>
+    </div>
+}
+
+@code
+{
+    [Parameter]
+    public int Id { get; set; }
+    private string? error;
+    private bool isBusy;
+    private string? comment;
+    private Models.AlertDetails? alert;
+    private RuleBreakdown[]? breakdown;
+
+    private bool showConfirm;
+    private string confirmTitle = "";
+    private string confirmText = "";
+    private string confirmColor = "#39ff88";
+    private Func<Task>? confirmAction;
+
+
+    private void AskResolve(string status)
+    {
+        if(string.IsNullOrWhiteSpace(comment))
+        {
+            error = "Comment is required";
+            return;
+        }
+
+        error = null;
+
+        if (status == "Blocked")
+            Ask("Confirm block", "Mark this alert as Blocked?", "#ff4d6a", () => ResolveAsync("Blocked"));
+        else
+            Ask("False Positive", "Mark this alert as False Positive?", "#39ff88", () => ResolveAsync("FalsePositive"));
+    }
+
+
+    private void Ask(string title, string text, string color, Func<Task> action)
+    {
+        confirmTitle = title;
+        confirmText = text;
+        confirmColor = color;
+        confirmAction = action;
+        showConfirm = true;
+    }
+
+    private async Task ConfirmYesAsync()
+    {
+        showConfirm = false;
+
+        if(confirmAction is not null)
+        {
+            await confirmAction();
+        }
+    }
+
+    private void ConfirmNo() => showConfirm = false;
+
+
+    private async Task ResolveAsync(string status)
+    {
+        error = null;
+        isBusy = true;
+
+        try
+        {
+            var response = await Api.ResolveAsync(Id, status, comment);
+
+            if(response.StatusCode == HttpStatusCode.Conflict)
+            {
+                error = await response.Content.ReadAsStringAsync();
+                return;
+            }
+
+            if(!response.IsSuccessStatusCode)
+            {
+                error = $"Error: {response.StatusCode}";
+                return;
+            }
+
+
+            await LoadAsync(); 
+        }
+
+        catch(Exception ex)
+        {
+            error = ex.Message;
+        }
+        finally
+        {
+            isBusy = false;
+        }
+    }
+
+
+    private async Task TakeToReviewAsync()
+    {
+        error = null;
+        isBusy = true;
+
+        try
+        {
+            var response = await Api.TakeToReviewAsync(Id);
+
+            if(response.StatusCode == HttpStatusCode.Conflict)
+            {
+                error = await response.Content.ReadAsStringAsync();
+                return;
+            }
+
+            if(!response.IsSuccessStatusCode)
+            {
+                error = $"Error: {response.StatusCode}";
+                return;
+            }
+
+
+            await LoadAsync();
+        }
+
+        catch (Exception ex)
+        {
+            error = ex.Message;
+        }
+        finally
+        {
+            isBusy = false;
+        }
+    }
+
+
+    protected override async Task OnInitializedAsync() => await LoadAsync();
+
+    private async Task LoadAsync()
+    {
+        error = null;
+        alert = null;
+        breakdown = null;
+
+        try
+        {
+            alert = await Api.GetByIdAsync(Id);
+
+            if(alert is not null)
+            {
+                try
+                {
+                    breakdown = JsonSerializer.Deserialize<RuleBreakdown[]>(
+                        alert.ScoreBreakdownJson, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+                }
+                catch(JsonException)
+                {
+                    breakdown = null;
+                }
+            }
+        }
+        catch(Exception ex)
+        {
+            error = ex.Message;
+        }
+    }
+
+    private static string StatusColor(string? status) => status switch
+    {
+        "New" => "#3aa0ff",
+        "UnderReview" => "#ff9f3a",
+        "Blocked" => "#ff4d6a",
+        "FalsePositive" => "#39ff88",
+        _ => "#d7f5e0"
+    };
+
+    private static string ScoreColor(decimal score) => score switch
+    {
+        >= 90 => "#ff4d6a",
+        _ => "#ff9f3a"
+
+    };
+}

@@ -1,0 +1,260 @@
+﻿@page "/"
+@attribute [Authorize]
+@using System.Net.Http.Json
+@using Aml.AdminPanel.Models
+@using Microsoft.AspNetCore.Authorization
+@using Microsoft.AspNetCore.Components.Authorization
+@inject HttpClient Http
+
+<PageTitle>AML Monitoring System</PageTitle>
+
+<h1 style="font-family: 'Cascadia Code', Consolas, monospace; font-weight: 700; font-size: 1.9rem; color: #d7f5e0; margin-bottom: 1rem;">
+    <span style="color: #39ff88;">&gt;</span> Monitoring workspace
+</h1>
+
+<h3 class="mt-4" 
+    style="font-size: 1.5rem; font-weight: 700; color: #f1fff6; border-left: 4px solid #39ff88; padding-left: 0.75rem; margin-bottom: 1rem;">
+        ALERTS</h3>
+
+<div class="row g-3 mb-4">
+    <div class="col-md-3">
+        <div class="card"
+             style="background-color: #0f1712; border: 1px solid #1f3a28; border-radius: 10px;
+            box-shadow: 0 0 20px rgba(57, 255, 136, 0.08); font-family: 'Cascadia Code', Consolas, monospace;">
+            <div class="card-body" style="padding: 1.25rem 1.5rem">
+                <h5 class="card-subtitle mb-2" 
+                    style="font-size: 0.75rem; letter-spacing: 1.5px; color: #6b8f78">NEW</h5>
+                <p class="card-text fw-bold mb-0" 
+                   style="font-size: 2.75rem; line-height: 1; color: #3aa0ff; text-shadow: 0 0 14px rgba(57, 255, 136, 0.5)">@newCount</p>
+            </div>
+        </div>
+    </div>
+
+
+    <div class="col-md-3">
+        <div class="card"
+             style="background-color: #0f1712; border: 1px solid #1f3a28; border-radius: 10px;
+            box-shadow: 0 0 20px rgba(57, 255, 136, 0.08); font-family: 'Cascadia Code', Consolas, monospace;">
+            <div class="card-body" style="padding: 1.25rem 1.5rem">
+                <h5 class="card-subtitle mb-2"
+                    style="font-size: 0.75rem; letter-spacing: 1.5px; color: #6b8f78">
+                    UNDER REVIEW
+                </h5>
+                <p class="card-text fw-bold mb-0"
+                   style="font-size: 2.75rem; line-height: 1; color: #ff9f3a; text-shadow: 0 0 14px rgba(57, 255, 136, 0.5)">@underReviewCount</p>
+            </div>
+        </div>
+    </div>
+
+
+    <div class="col-md-3">
+        <div class="card"
+             style="background-color: #0f1712; border: 1px solid #1f3a28; border-radius: 10px;
+            box-shadow: 0 0 20px rgba(57, 255, 136, 0.08); font-family: 'Cascadia Code', Consolas, monospace;">
+            <div class="card-body" style="padding: 1.25rem 1.5rem">
+                <h5 class="card-subtitle mb-2"
+                    style="font-size: 0.75rem; letter-spacing: 1.5px; color: #6b8f78">
+                    BLOCKED
+                </h5>
+                <p class="card-text fw-bold mb-0"
+                   style="font-size: 2.75rem; line-height: 1; color: #ff4d6a; text-shadow: 0 0 14px rgba(57, 255, 136, 0.5)">@blockedCount</p>
+            </div>
+        </div>
+    </div>
+
+
+    <div class="col-md-3">
+        <div class="card"
+             style="background-color: #0f1712; border: 1px solid #1f3a28; border-radius: 10px;
+            box-shadow: 0 0 20px rgba(57, 255, 136, 0.08); font-family: 'Cascadia Code', Consolas, monospace;">
+            <div class="card-body" style="padding: 1.25rem 1.5rem">
+                <h5 class="card-subtitle mb-2"
+                    style="font-size: 0.75rem; letter-spacing: 1.5px; color: #6b8f78">
+                    FALSE POSITIVE
+                </h5>
+                <p class="card-text fw-bold mb-0"
+                   style="font-size: 2.75rem; line-height: 1; color: #39ff88; text-shadow: 0 0 14px rgba(57, 255, 136, 0.5)">@falsePositiveCount</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-3 mb-4">
+    <div class="col-12">
+        <div class="card" style="background-color: #0f1712; border: 1px solid #1f3a28; border-radius: 10px; box-shadow: 0 0 20px rgba(57, 255, 136, 0.08); font-family: 'Cascadia Code', Consolas, monospace;">
+            <div class="card-body" style="padding: 1.25rem 1.5rem">
+                <div class="d-flex align-items-end justify-content-between mb-3">
+                    <div>
+                        <h5 class="card-subtitle mb-2" style="font-size: 0.75rem; letter-spacing: 1.5px; color: #6b8f78">TOTAL</h5>
+                        <p class="card-text fw-bold mb-0" style="font-size: 2.75rem; line-height: 1; color: #f1fff6; text-shadow: 0 0 14px rgba(241, 255, 246, 0.25)">@Total</p>
+                    </div>
+                </div>
+
+                <div style="display: flex; height: 8px; border-radius: 4px; overflow: hidden; background-color: #0b0f0c; border: 1px solid #1f3a28;">
+                    <div style="width: @(Pct(newCount))%; background-color: #3aa0ff;" title="New: @newCount"></div>
+                    <div style="width: @(Pct(underReviewCount))%; background-color: #ff9f3a;" title="Under Review: @underReviewCount"></div>
+                    <div style="width: @(Pct(blockedCount))%; background-color: #ff4d6a;" title="Blocked: @blockedCount"></div>
+                    <div style="width: @(Pct(falsePositiveCount))%; background-color: #39ff88;" title="False Positive: @falsePositiveCount"></div>
+
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+
+<h3 class="mt-4"
+    style="font-size: 1.5rem; font-weight: 700; color: #f1fff6; border-left: 4px solid #39ff88; padding-left: 0.75rem; margin-bottom: 1rem;">
+    ACTIVE RULES
+</h3>
+
+@if(activeRules is not null)
+{
+    <div class="row g-3 mb-4">
+        @foreach(var rule in activeRules)
+        {
+            <div class="col-md-6 col-xl-4">
+                <div class="card h-100" style="background-color: #0f1712; border: 1px solid #1f3a28; border-radius: 10px;
+                    box-shadow: 0 0 20px rgba(57, 255, 136, 0.08); font-family: 'Cascadia Code', Consolas, monospace;">
+                    <div class="card-body" style="padding: 1.25rem 1.5rem">
+                        <h5 class="mb-0" style="font-size: 1.05rem; font-weight: 700; color: #f1fff6;">
+                            <span style="color: #39ff88;">&gt;</span> @rule.RuleCode
+                        </h5>
+
+                        <hr style="border-color: #1f3a28; opacity: 1; margin: 0.9rem 0;"/>
+
+                        <div class="d-flex justify-content-between mb-2">
+                            <span style="font-size: 0.75rem; letter-spacing: 1.5px; color: #6b8f78;">TYPE</span>
+                            <span style="color: #d7f5e0;">@rule.Type</span>
+                        </div>
+
+                        <div class="d-flex justify-content-between mb-2">
+                            <span style="font-size: 0.75rem; letter-spacing: 1.5px; color: #6b8f78;">ACTION</span>
+                            <span style="color: @ActionColor(rule.Action.ToString()); border: 1px solid @ActionColor(rule.Action.ToString());
+                                        border-radius: 6px; padding: 0.1rem 0.6rem; font-size: 0.8rem; font-weight: 700; letter-spacing: 1px;">@rule.Action.ToString().ToUpperInvariant()</span>
+                        </div>
+
+                        <div class="d-flex justify-content-between mb-2">
+                            <span style="font-size: 0.75rem; letter-spacing: 1.5px; color: #6b8f78;">WEIGHT</span>
+                            <span style="color: #3aa0ff;">@rule.Weight</span>
+                        </div>
+
+                        <div class="d-flex justify-content-between align-items-end">
+                            <span style="font-size: 0.75rem; letter-spacing: 1.5px; color: #6b8f78;">ALERTS</span>
+                            <span class="fw-bold" style="line-height: 1; color: #39ff88; text-shadow: 0 0 14px rgba(57, 255, 136, 0.5);">
+                                @(alertsByRule.GetValueOrDefault(rule.RuleCode))
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+}
+
+<AuthorizeView Roles="Admin">
+    <Authorized>
+        <h3 class="mt-4"
+            style="font-size: 1.5rem; font-weight: 700; color: #f1fff6; border-left: 4px solid #39ff88; padding-left: 0.75rem; margin-bottom: 1rem;">
+            SCREENING
+        </h3>
+
+        <div style="background-color: #0a100c; border: 1px solid #1f3a28; border-radius: 10px; overflow: hidden;
+            box-shadow: 0 0 20px rgba(57, 255, 136, 0.08); font-family: 'Cascadia Code', Consolas, monospace;">
+            
+            <div style="display: flex; gap: 6px; padding: 0.6rem 0.9rem; background-color: #0f1712; border-bottom: 1px solid #1f3a28;">
+                <span style="width: 10px; height: 10px; border-radius: 50%; background-color: #ff4d6a;"></span>
+                <span style="width: 10px; height: 10px; border-radius: 50%; background-color: #ff9f3a;"></span>
+                <span style="width: 10px; height: 10px; border-radius: 50%; background-color: #39ff88;"></span>
+
+                <span style="margin-left: 0.5rem; font-size: 0.75rem; letter-spacing: 1.5px; color: #6b8f78;">screening.log</span>
+            </div>
+
+            <div style="padding: 1.1rem 1.25rem; line-height: 1.9; color: #d7f5e0;">
+                <div><span style="color: #39ff88;">$</span>screening --status</div>
+                <div><span style="color: #6b8f78;">total_runs</span> : <span style="color: #39ff88; font-weight: 700;">@screeningRunCount</span></div>
+                <div><span style="color: #6b8f78;">last_run</span> : <span style="color: #39ff88; font-weight: 700;">@(lastScreeningDate?.ToString("dd.MM.yyyy HH:mm:ss") ?? "-")</span></div>
+            </div>
+        </div>
+    </Authorized>
+</AuthorizeView>
+
+
+@if(error is not null)
+{
+    <p style="color: #ff6b6b; background: rgba(255, 107, 107, 0.1); border: 1px solid rgba(255, 107, 107, 0.35); border-radius: 8px; padding: 0.6rem 1rem;">@error</p>
+}
+
+
+@code {
+    private string? error;
+
+    private int newCount;
+    private int underReviewCount;
+    private int blockedCount;
+    private int falsePositiveCount;
+
+    private RuleListItem[]? activeRules;
+    private Dictionary<string, int> alertsByRule = new();
+
+    private int screeningRunCount;
+    private DateTime? lastScreeningDate;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            newCount = await GetCountAsync("New");
+            underReviewCount = await GetCountAsync("UnderReview");
+            blockedCount = await GetCountAsync("Blocked");
+            falsePositiveCount = await GetCountAsync("FalsePositive");
+        }
+        catch(Exception ex)
+        {
+            error = ex.Message;
+        }
+
+
+        try
+        {
+            var screening = await Http.GetFromJsonAsync<AuditListResponse>("api/audit?entityType=Transaction&pageSize=1");
+            screeningRunCount = screening?.Total ?? 0;
+            lastScreeningDate = screening?.Items.FirstOrDefault()?.CreatedAt;
+        }
+        catch {}
+
+
+        var rules = await Http.GetFromJsonAsync<RuleListItem[]>("api/rules");
+        activeRules = rules?.Where(r => r.IsActive).ToArray();
+
+        var allAlerts = await Http.GetFromJsonAsync<AlertListResponse>("api/alerts?pageSize=200");
+        alertsByRule = allAlerts?.Items
+            .GroupBy(a => a.PrimaryTrigger)
+            .ToDictionary(i => i.Key, i => i.Count()) ?? new();
+    }
+
+    private async Task<int> GetCountAsync(string status)
+    {
+        var response = await Http.GetFromJsonAsync<AlertListResponse>($"api/alerts?status={status}&pageSize=1");
+
+
+        return response?.Total ?? 0;
+    }
+
+
+    private int Total => newCount + underReviewCount + blockedCount + falsePositiveCount;
+
+    private string Pct(int value) =>
+        Total == 0 ? "0" : (value * 100.0 / Total).ToString("0.##", System.Globalization.CultureInfo.InvariantCulture);
+
+
+    private static string ActionColor(string? action) => action?.ToLowerInvariant() switch
+    {
+        "block" => "#ff4d6a",
+        "flag" => "#ff9f3a",
+        _ => "#d7f5e0"
+    };
+
+
+}
