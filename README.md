@@ -189,6 +189,9 @@ These are conscious scope decisions.
 
 ## Screenshots
 
-![Dashboard](docs/dashboard.png)
-![Alert details](docs/alert-details.png)
-![Rules](docs/rules.png)
+![Dashboard](pngs/home_page.png)
+![Alerts](pngs/alerts_page.png)
+![Alert Details](pngs/alert_details_page.png)
+![Rules](pngs/rules_page.png)
+![Rules Edit](pngs/rules_page_admin.png)
+![Audit Logs](pngs/audit_page.png)
