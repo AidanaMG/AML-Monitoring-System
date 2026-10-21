@@ -1,4 +1,4 @@
-﻿using Aml.Application.Audit;
+using Aml.Application.Audit;
 using Aml.Domain.Entities;
 using Aml.Domain.Enums;
 using Aml.Infrastructure;
@@ -103,6 +103,7 @@ namespace Aml.Api.Controllers
 
 
         [HttpPatch("{id:int}/resolve")]
+        [Authorize(Roles = "Officer")]
         public async Task<IActionResult> Resolve(
             int id,
             [FromBody] ResolveAlertRequest request,
@@ -187,6 +188,7 @@ namespace Aml.Api.Controllers
 
 
         [HttpPatch("{id:int}/take")]
+        [Authorize(Roles = "Officer")]
         public async Task<IActionResult> TakeToReview(int id, CancellationToken ct)
         {
             var userName = User.Identity?.Name;
