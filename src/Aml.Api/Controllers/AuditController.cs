@@ -18,6 +18,7 @@ namespace Aml.Api.Controllers
         }
 
         [HttpGet]
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> GetList(
             [FromQuery] string? entityType,
             [FromQuery] int? entityId,

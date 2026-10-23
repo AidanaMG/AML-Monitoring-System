@@ -12,7 +12,7 @@ namespace Aml.Api.Controllers
 {
     [ApiController]
     [Route("api/screening")]
-    [Authorize]
+    [Authorize(Roles = "Admin")]
     public class ScreeningController : ControllerBase
     {
         private readonly AmlDbContext _db;

@@ -9,6 +9,7 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
+using Microsoft.OpenApi;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -28,6 +29,25 @@ builder.Services.AddControllers()
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddOpenApi();
 
+builder.Services.AddSwaggerGen(options =>
+{
+    options.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
+    {
+        Name = "Authorization",
+        Type = SecuritySchemeType.Http,
+        Scheme = "bearer",
+        BearerFormat = "JWT",
+        In = ParameterLocation.Header,
+        Description = "Paste the token from /api/auth/login (without the word 'Bearer')"
+    });
+
+
+    options.AddSecurityRequirement(document => new OpenApiSecurityRequirement
+    {
+        [new OpenApiSecuritySchemeReference("Bearer", document)] = []
+    });
+});
+
 
 builder.Services.AddScoped<IRuleContextBuilder, EfRuleContextBuilder>();
 builder.Services.AddScoped<IAlertRepository, EfAlertRepository>();
@@ -42,11 +62,8 @@ builder.Services.AddScoped<ITransactionRule, HighFrequencyRule>();
 builder.Services.AddScoped<ITransactionRule, HighRiskCountryRule>();
 builder.Services.AddScoped<ITransactionRule, HighRiskMerchantRule>();
 builder.Services.AddScoped<ITransactionRule, WatchlistRule>();
-
 builder.Services.AddScoped<TransactionScreeningService>();
-
 builder.Services.AddScoped<JwtTokenService>();
-
 builder.Services.AddScoped<IAuditService, EfAuditService>();
 
 var jwt = builder.Configuration.GetSection("Jwt");
@@ -97,6 +114,8 @@ using (var scope = app.Services.CreateScope())
 if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();
+    app.UseSwagger();
+    app.UseSwaggerUI();
 }
 
 if(!app.Environment.IsDevelopment())
