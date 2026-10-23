@@ -187,6 +187,8 @@ These are conscious scope decisions.
 - Event-based alert data (store the context snapshot at alert time instead of relying on `DateTime.Now` windows)
 - More typologies and rules, and continued improvements to existing ones
 
+![Tests](https://github.com/AidanaMG/AML-Monitoring-System/actions/workflows/tests.yml/badge.svg)
+
 ## Screenshots
 
 ![Dashboard](pngs/home_page.PNG)
