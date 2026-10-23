@@ -126,6 +126,19 @@ JOIN Accounts a ON t.FromAccountId = a.Id OR t.ToAccountId = a.Id
 WHERE t.Status = 2
 ORDER BY a.ClientId;`), log in as admin and call `POST /api/screening/{transactionId}`.
 
+## API documentation (Swagger)
+
+After starting the API (`dotnet run` in `Aml/src/Aml.Api`), open Swagger UI in the browser:
+
+    https://localhost:<port>/swagger
+
+The port is printed in the console on startup (see `launchSettings.json`).
+Swagger lists all endpoints with request/response schemas and lets you call them directly.
+
+To call protected endpoints:
+1. Call `POST /api/auth/login` with a demo account (see below) and copy the token.
+2. Click **Authorize** and paste the token.
+
 **Demo accounts** (passwords are hardcoded in the seeder for demonstration only; a real system would never do this):
 
 | User | Password | Role |
